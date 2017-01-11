@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data>
+    <cells>
+        <cell y="0" x="0"/>
+        <cell y="0" x="2" x2="6"/>
+        <cell y="0" x="8"/>
+        <cell y="1" x="0" x2="8"/>
+        <cell y="2" x="0" x2="8"/>
+        <cell y="3" x="0" x2="8"/>
+        <cell y="4" x="0" x2="8"/>
+        <cell y="5" x="0" x2="8"/>
+        <cell y="6" x="0"/>
+        <cell y="6" x="2"/>
+        <cell y="6" x="4" x2="6"/>
+        <cell y="6" x="8"/>
+    </cells>
+
+    <blocks>
+        <block y="1" x="6"/>
+        <block y="3" x="3"/>
+    </blocks>
+
+    <shapes>
+        <shape type="S100_111_000" count="6"/>
+        <shape type="S010_111_000" count="5"/>
+        <shape type="S011_110_000" count="3"/>
+    </shapes>
+</data>
