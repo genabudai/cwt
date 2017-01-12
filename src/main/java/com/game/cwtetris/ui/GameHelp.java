@@ -1,17 +1,22 @@
 package com.game.cwtetris.ui;
 
-import android.media.MediaPlayer;
+import android.graphics.Bitmap;
+import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.game.cwtetris.CanvasView;
 import com.game.cwtetris.data.GameData;
 import com.game.cwtetris.data.GameState;
+import com.game.cwtetris.data.ImageCache;
 import com.game.cwtetris.data.Point;
 import com.game.cwtetris.data.UserSettings;
 
 import java.util.Calendar;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static android.view.InputDevice.SOURCE_UNKNOWN;
 
@@ -21,7 +26,12 @@ import static android.view.InputDevice.SOURCE_UNKNOWN;
 
 public class GameHelp implements View.OnTouchListener {
 
+    private final ExecutorService pool = Executors.newFixedThreadPool(1);
     private final Object lock = new Object();
+    private float x = 0;
+    private float y = 0;
+    private Bitmap arrow = ImageCache.getImage("arrow");
+
     private int screenNumber = 1;
     private GameData gameData;
 
@@ -49,8 +59,9 @@ public class GameHelp implements View.OnTouchListener {
                 case 4:
                     showScreen4(view);
                     break;
-            default: restoreGame(view);
+                case 5: restoreGame(view);
             }
+
         }
     }
 
@@ -58,26 +69,34 @@ public class GameHelp implements View.OnTouchListener {
         Thread t = new Thread() {
             @Override
             public void run() {
+                Log.d("AAA", "showScreen1();");
                 moveBlock(view, 4, 10, 4, 4);
                 moveBlock(view, 7, 10, 2, 4);
                 moveBlock(view, 7, 10, 5, 3);
+                Log.d("AAA", "showScreen1(); end");
             }
         };
-        t.start();
-
+        pool.submit(t);
     }
 
     private void showScreen2 (final CanvasView view) {
         Thread t = new Thread() {
             @Override
             public void run() {
+                try {
+                Log.d("AAA", "showScreen2();");
+                sleep(500);
                 int r = view.cellSize/2;
                 Point point = new Point(view.width - r*3, r);
                 actionDown(view, point);
+                sleep(700);
                 actionUp(view, point);
+                Log.d("AAA", "showScreen2(); end");
+                } catch (InterruptedException e) {
+                }
             }
         };
-        t.start();
+        pool.submit(t);
     }
 
     private void showScreen3 (final CanvasView view) {
@@ -85,38 +104,44 @@ public class GameHelp implements View.OnTouchListener {
             @Override
             public void run() {
                 try {
+                    Log.d("AAA", "showScreen3();");
                     Point point = view.getCellCenter(6, 9);
                     point.y -= view.cellSize;
                     actionDown(view, point);
+                    sleep(500);
                     actionUp(view, point);
-                    sleep(1000);
+                    sleep(500);
                     point = view.getCellCenter(0, 9);
                     point.y -= view.cellSize;
                     actionDown(view, point);
+                    sleep(500);
                     actionUp(view, point);
-                    sleep(1000);
+                    sleep(500);
                     point = view.getCellCenter(6, 9);
                     point.y -= view.cellSize;
                     actionDown(view, point);
+                    sleep(500);
                     actionUp(view, point);
+                    Log.d("AAA", "showScreen3(); end");
                 } catch (InterruptedException e) {
-
                 }
             }
         };
-        t.start();
+        pool.submit(t);
     }
 
     private void showScreen4 (final CanvasView view) {
         Thread t = new Thread() {
             @Override
             public void run() {
+                Log.d("AAA", "showScreen4();");
                 moveBlock(view, 1, 10, 4, 2);
                 moveBlock(view, 7, 10, 6, 3);
                 moveBlock(view, 1, 10, 4, 5);
+                Log.d("AAA", "showScreen4(); end");
             }
         };
-        t.start();
+        pool.submit(t);
     }
 
     private void storeGame(final CanvasView view) {
@@ -124,12 +149,20 @@ public class GameHelp implements View.OnTouchListener {
     }
 
     private void restoreGame(final CanvasView view) {
-        synchronized (view) {
-            view.setData(gameData);
-            view.setState(GameState.GAME);
-            view.getGrid().prepareGrid(view);
-            view.postInvalidate();
-        }
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                synchronized (view) {
+                    Log.d("AAA", "showScreen5();");
+                    view.setData(gameData);
+                    view.setState(GameState.GAME);
+                    view.getGrid().prepareGrid(view);
+                    view.postInvalidate();
+                    Log.d("AAA", "showScreen5(); end");
+                }
+            }
+        };
+        pool.submit(t);
     }
 
     private void moveBlock (final CanvasView view, final float startX, final float startY,
@@ -172,16 +205,25 @@ public class GameHelp implements View.OnTouchListener {
     public boolean onTouch(View v, MotionEvent event) {
         CanvasView view = (CanvasView)v;
         if (view.getState() != GameState.HELP) return false;
-        if ((event.getSource() != SOURCE_UNKNOWN) &&
-                (event.getAction() == MotionEvent.ACTION_UP)) {
-            showNext( view );
-            return true;
+        x = event.getX();
+        y = event.getY();
+
+        if (event.getSource() != SOURCE_UNKNOWN) {
+            x = 0;
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                showNext(view);
+                return true;
+            }
         }
         return false;
     }
 
     public void draw(CanvasView view){
-
+        if (view.getState() != GameState.HELP || x == 0) return;
+        int r = view.cellSize * 3;
+        if (arrow != null) {
+            view.mCanvas.drawBitmap(arrow, null, new RectF(x, y, x + r, y + r), null);
+        }
     };
 
 }

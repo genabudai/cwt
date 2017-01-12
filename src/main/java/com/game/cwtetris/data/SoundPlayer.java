@@ -24,8 +24,7 @@ public class SoundPlayer {
     private MediaPlayer playSound(int sound) {
         MediaPlayer mp = mpMap.get( sound );
         if (mp != null){
-            mp.pause();
-            mp.seekTo(0);
+            stopSound(mp);
         } else {
             mp = MediaPlayer.create(getAppContext(), sound);
             mp.setLooping( sound == R.raw.music );
@@ -33,6 +32,19 @@ public class SoundPlayer {
         }
         mp.start();
         return mp;
+    }
+
+    private void stopSound(int sound) {
+        MediaPlayer mp = mpMap.get( sound );
+        if (mp != null){
+            stopSound(mp);
+        }
+    }
+
+    private void stopSound(MediaPlayer mp) {
+        if (mp == null) return;
+        mp.pause();
+        mp.seekTo(0);
     }
 
     public void rotate() {
@@ -48,6 +60,17 @@ public class SoundPlayer {
     public void drop() {
         if (!UserSettings.getSoundOnValueFromDb()) return;
         playSound(R.raw.drop);
+    }
+
+    public void start() {
+        if (!UserSettings.getSoundOnValueFromDb()) return;
+        stopSound(R.raw.win);
+        playSound(R.raw.start);
+    }
+
+    public void win() {
+        if (!UserSettings.getSoundOnValueFromDb()) return;
+        playSound(R.raw.win);
     }
 
     public void playBackgroundMusic() {

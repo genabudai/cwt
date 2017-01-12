@@ -16,6 +16,7 @@ import com.game.cwtetris.data.GameDataLoader;
 import com.game.cwtetris.data.GameState;
 import com.game.cwtetris.data.ImageCache;
 import com.game.cwtetris.data.Point;
+import com.game.cwtetris.data.SoundPlayer;
 import com.game.cwtetris.data.UserSettings;
 import com.game.cwtetris.ui.GameHelp;
 import com.game.cwtetris.ui.Grid;
@@ -23,6 +24,7 @@ import com.game.cwtetris.ui.LevelChoice;
 import com.game.cwtetris.ui.Menu;
 
 import static android.view.InputDevice.SOURCE_UNKNOWN;
+import static com.game.cwtetris.CWTApp.getSoundPlayer;
 
 
 public class CanvasView extends View {
@@ -74,7 +76,10 @@ public class CanvasView extends View {
     }
 
     public void newGame(int level) {
-        level = (level==0?UserSettings.getCurrentLevelFromDb():level);
+        if (level==0) {
+            level = UserSettings.getCurrentLevelFromDb();
+            getSoundPlayer().start();
+        };
         data = GameDataLoader.getLevel(level);
         grid.prepareGrid(this);
         invalidate();
@@ -122,7 +127,6 @@ public class CanvasView extends View {
     // override onDraw
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.d("AAA", "onDraw()");
         canvas.drawRect(0, 0, width, height, bg_paint);
 
         if (menu==null) return;
@@ -145,6 +149,7 @@ public class CanvasView extends View {
 //            Point endP = getCellCenter(0, 9);
 //            endP.y -= cellSize;
 //            mCanvas.drawLine(startP.x, startP.y, endP.x, endP.y, mPaint);
+            help.draw( this );
         }
     }
 
@@ -186,9 +191,7 @@ public class CanvasView extends View {
         if (event.getAction() == MotionEvent.ACTION_UP) {
             Log.d("AAA", "ACTION_UP");
         }
-        if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            Log.d("AAA", "ACTION_MOVE");
-        }
+
         float x = event.getX();
         float y = event.getY();
 
@@ -219,7 +222,6 @@ public class CanvasView extends View {
                     break;
             }
         }
-        Log.d("AAA", "invalidate();" + "(x=" + event.getX() + " y=" + event.getY() + ")");
         postInvalidate();
         return true;
     }

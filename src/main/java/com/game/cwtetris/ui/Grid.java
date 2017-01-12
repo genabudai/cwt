@@ -10,11 +10,11 @@ import android.view.View;
 
 import com.game.cwtetris.CanvasView;
 import com.game.cwtetris.data.CellPoint;
+import com.game.cwtetris.data.GameState;
 import com.game.cwtetris.data.ImageCache;
 import com.game.cwtetris.data.Point;
 import com.game.cwtetris.data.Randomizer;
 import com.game.cwtetris.data.ShapeData;
-import com.game.cwtetris.data.SoundPlayer;
 import com.game.cwtetris.ui.shape.ShapeBuilder;
 
 import java.util.ArrayList;
@@ -33,10 +33,12 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
 
     private final Paint paintBorder = new Paint();
     private final Paint paintFill = new Paint();
-    private ImageElement youWinImage;
+    private ImageElement winImage;
     private final List<Shape> shapeElements = new ArrayList<Shape>();
     private final Map<Point, Point> lines = new ArrayMap<Point, Point>();
+    private final WinnerSceen ws = new WinnerSceen();
     private boolean isVisible = true;
+
 
     public Grid(CanvasView view)  {
         paintFill.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -48,13 +50,14 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
         paintBorder.setStrokeJoin(Paint.Join.ROUND);
         paintBorder.setStrokeWidth(4f);
 
-        youWinImage = new ImageElement( ImageCache.getImage("you_win"),
+        winImage = new ImageElement( ImageCache.getImage("win"),
                                         view.getCellCenter(7, 10), view.cellSize * 3 );
     }
 
     public void prepareGrid( CanvasView view ){
         shapeElements.clear();
         lines.clear();
+        ws.clear();
 
         Randomizer.refreshRandomColors();
         int i=0;
@@ -86,7 +89,9 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
                     line.getValue().x, line.getValue().y,
                     paintBorder);
         }
+
         int gap = view.cellSize / 25;
+        boolean isLevelCompleted = isLevelCompleted(view);
         for (CellPoint cellPoint:view.getData().getCells()) {
             Point p = getGridCellCenter(view, cellPoint.x,cellPoint.y);
             int r = view.cellSize / 2;
@@ -95,8 +100,7 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
             if (cellPoint.value == 100) {
                 paintFill.setColor(Color.BLACK);
                 view.mCanvas.drawRect(rect, paintFill);
-            } else if (cellPoint.value != 0){
-//                drawImageInCell(view, "b_" + cellPoint.value, rect);
+            } else if (cellPoint.value != 0 && (!isLevelCompleted || view.getState() == GameState.HELP)){
                 paintFill.setColor(ImageCache.getColor(cellPoint.value));
                 view.mCanvas.drawRoundRect(rect, 15, 15, paintFill);
             }
@@ -113,8 +117,8 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
             ts.draw(view);
         }
 
-        if (isLevelCompleted(view)) {
-            youWinImage.draw(view);
+        if (isLevelCompleted) {
+            ws.draw(view, paintFill);
         }
     }
 
@@ -175,7 +179,11 @@ public class Grid implements View.OnTouchListener, IButtonVisibilityProvider {
             targetCell.value = shape.getColor();
         }
         shape.decCount(view);
-        getSoundPlayer().drop();
+        if (isLevelCompleted(view)) {
+            getSoundPlayer().win();
+        } else {
+            getSoundPlayer().drop();
+        }
         return true;
     }
 
